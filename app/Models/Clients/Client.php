@@ -164,4 +164,9 @@ class Client extends Model
         return $months;
     }
 
+	public function tickets()
+{
+    return $this->hasMany(\App\Models\Raffles\Ticket::class);
+}
+
 }
