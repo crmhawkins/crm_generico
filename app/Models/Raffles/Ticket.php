@@ -26,7 +26,7 @@ class Ticket extends Model
 
     // Relación con el cliente
     public function client()
-    {
-        return $this->belongsTo(Client::class);
-    }
+{
+    return $this->belongsTo(Client::class, 'client_id');
+}
 }

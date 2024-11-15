@@ -29,6 +29,16 @@
         <section class="section pt-4">
             <div class="card">
                 <div class="card-body">
+                    @if ($errors->any())
+    <div class="alert alert-danger">
+        <ul>
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
                     <form action="{{ route('raffles.store') }}" method="POST">
                         @csrf
                         <div class="form-group mb-3">
@@ -42,6 +52,10 @@
                         <div class="form-group mb-3">
                             <label for="ticket_digits">Dígitos del Ticket</label>
                             <input type="number" name="ticket_digits" class="form-control" required>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="start_date">Fecha de Inicio</label>
+                            <input type="date" name="start_date" class="form-control">
                         </div>
                         <div class="form-group mb-3">
                             <label for="end_date">Fecha de Fin</label>
@@ -58,4 +72,3 @@
 @section('scripts')
 <!-- Puedes añadir scripts adicionales aquí -->
 @endsection
-

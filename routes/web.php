@@ -598,23 +598,18 @@ Route::get('/portal/factura/{id}', [PortalClientesController::class, 'showInvoic
 
 
 
-//Sorteo 
+// Sorteo
 Route::prefix('raffles')->name('raffles.')->group(function () {
     Route::get('/', [RaffleController::class, 'index'])->name('index');
     Route::get('/create', [RaffleController::class, 'create'])->name('create');
     Route::post('/', [RaffleController::class, 'store'])->name('store');
-    Route::get('/{raffle}', [RaffleController::class, 'show'])->name('show');
+    Route::get('/completed', [RaffleController::class, 'showCompleted'])->name('show_completed');
+    Route::get('/{raffle}/show', [RaffleController::class, 'show'])->name('show');
     Route::get('/{raffle}/edit', [RaffleController::class, 'edit'])->name('edit');
-    Route::put('/{raffle}', [RaffleController::class, 'update'])->name('update');
-    Route::delete('/{raffle}', [RaffleController::class, 'destroy'])->name('destroy');
-    Route::post('/{raffle}/add-winner', [RaffleController::class, 'addWinner'])->name('add_winner');
+    Route::put('/{raffle}/update', [RaffleController::class, 'updateRaffle'])->name('updateRaffle'); // Ruta actualizada
     Route::post('/{raffle}/assign-winner', [RaffleController::class, 'assignWinner'])->name('assign_winner');
-	Route::get('/tickets/{ticket}', function (\App\Models\Ticket $ticket) {
-    return response()->json([
-        'client_name' => $ticket->client->name, // Asegúrate de tener la relación configurada
-        'ticket_number' => $ticket->ticket_number,
-    ]);
+    Route::get('/{raffle}/winner', [RaffleController::class, 'showWinner'])->name('show_winner');
+    Route::get('/{raffle}/tickets', [RaffleController::class, 'showTickets'])->name('show_tickets');
+    Route::post('/{raffle}/finalize', [RaffleController::class, 'finalize'])->name('finalize');
 });
 
-	
-});

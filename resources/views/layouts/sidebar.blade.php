@@ -43,6 +43,7 @@
                     $EmailConfig = request()->routeIs('admin.categoriaEmail.*') || request()->routeIs('admin.statusMail.*');
                     $BajaActive = request()->routeIs('bajas.*');
                     $StadisticsActive = request()->routeIs('estadistica.*');
+                    $rafflesActive = request()->routeIs('raffles.index') || request()->routeIs('raffles.create') || request()->routeIs('raffles.show') || request()->routeIs('raffles.edit') || request()->routeIs('raffles.show_completed');
                     $admin = (Auth::user()->access_level_id == 1);
                     $gerente = (Auth::user()->access_level_id == 2);
                     $contable = (Auth::user()->access_level_id == 3);
@@ -690,6 +691,32 @@
                                         <span>
                                             Crear Categoria
                                         </span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li class="sidebar-item has-sub {{ $rafflesActive ? 'active' : '' }}">
+                            <a href="#" class='sidebar-link'>
+                                <i class="fa-solid fa-gift fs-5"></i>
+                                <span>Sorteos</span>
+                            </a>
+                            <ul class="submenu" style="{{ $rafflesActive ? 'display:block;' : 'display:none' }}">
+                                <li class="submenu-item {{ request()->routeIs('raffles.index') ? 'active' : '' }}">
+                                    <a href="{{ route('raffles.index') }}">
+                                        <i class="fa-solid fa-list"></i>
+                                        <span>Ver todos</span>
+                                    </a>
+                                </li>
+                                <li class="submenu-item {{ request()->routeIs('raffles.create') ? 'active' : '' }}">
+                                    <a href="{{ route('raffles.create') }}">
+                                        <i class="fa-solid fa-plus"></i>
+                                        <span>Crear sorteo</span>
+                                    </a>
+                                </li>
+                                <li class="submenu-item {{ request()->routeIs('raffles.show_completed') ? 'active' : '' }}">
+                                    <a href="{{ route('raffles.show_completed') }}">
+                                        <i class="fa-solid fa-archive"></i>
+                                        <span>Finalizados</span>
                                     </a>
                                 </li>
                             </ul>

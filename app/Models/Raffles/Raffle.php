@@ -10,6 +10,7 @@ class Raffle extends Model
     use HasFactory;
 
     protected $table = 'raffles';
+    protected $dates = ['start_date', 'end_date'];
 
     protected $fillable = [
         'year',
@@ -23,7 +24,7 @@ class Raffle extends Model
     // Relación con los boletos
     public function tickets()
     {
-        return $this->hasMany(Ticket::class);
+        return $this->hasMany(Ticket::class, 'raffle_id');
     }
 
     // Relación con el boleto ganador
@@ -31,6 +32,10 @@ class Raffle extends Model
     {
         return $this->belongsTo(Ticket::class, 'winner_ticket_id');
     }
+
+    // Raffle.php
+
+
 }
 
 

@@ -5,6 +5,7 @@ use App\Http\Controllers\CrmActivities\CrmActivityMeetingController;
 use App\Http\Controllers\Tesoreria\TesoreriaController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Raffles\RaffleController;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,3 +28,7 @@ Route::post('/acta/description', action: [CrmActivityMeetingController::class, '
 Route::post('/getAyudas', action: [ApiController::class, 'getayudas']);
 Route::post('/updateAyudas/{id}', action: [ApiController::class, 'updateAyudas']);
 Route::post('/updateMensajes', action: [ApiController::class, 'updateMensajes']);
+
+Route::post('/assign-tickets', [RaffleController::class, 'assignRandomTickets']);
+
+
