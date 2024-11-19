@@ -7,7 +7,6 @@ use App\Models\KitDigital;
 use Illuminate\Http\Request;
 use App\Models\Users\UserClient;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\DB;
 
 class ApiController extends Controller
 {
@@ -79,21 +78,27 @@ class ApiController extends Controller
 
     public function updatePassword(Request $request, $id)
 {
-    $request->validate([
-        'current_password' => 'required',
-        'new_password' => 'required|min:6|confirmed',
-    ]);
+    // Validación manual
+    if (!$request->has('current_password') || !$request->has('new_password')) {
+        return response()->json(['error' => 'Los campos current_password y new_password son obligatorios.'], 400);
+    }
 
+    if (strlen($request->new_password) < 6) {
+        return response()->json(['error' => 'La nueva contraseña debe tener al menos 6 caracteres.'], 400);
+    }
+
+    // Buscar cliente
     $client = UserClient::find($id);
-
     if (!$client) {
         return response()->json(['error' => 'Cliente no encontrado.'], 404);
     }
 
+    // Verificar contraseña actual
     if (!Hash::check($request->current_password, $client->password)) {
         return response()->json(['error' => 'La contraseña actual no es correcta.'], 400);
     }
 
+    // Actualizar contraseña
     $client->password = bcrypt($request->new_password);
     $client->save();
 
@@ -102,50 +107,82 @@ class ApiController extends Controller
 
     public function updateClientData(Request $request, $id)
 {
-    $request->validate([
-        'name' => 'nullable|string|max:255',
-        'email' => 'nullable|email|unique:users_clients,email,' . $id,
-        'phone' => 'nullable|string|max:15',
-    ]);
+    // Validación manual
+    $data = $request->all();
+    $errors = [];
 
+    if (isset($data['name']) && (!is_string($data['name']) || strlen($data['name']) > 255)) {
+        $errors['name'] = 'El campo name debe ser una cadena de texto y no puede exceder 255 caracteres.';
+    }
+
+    if (isset($data['email']) && (!filter_var($data['email'], FILTER_VALIDATE_EMAIL))) {
+        $errors['email'] = 'El campo email debe ser un correo electrónico válido.';
+    }
+
+    if (!empty($errors)) {
+        return response()->json(['errors' => $errors], 400);
+    }
+
+    // Buscar cliente
     $client = UserClient::find($id);
-
     if (!$client) {
         return response()->json(['error' => 'Cliente no encontrado.'], 404);
     }
 
-    $client->fill($request->only(['name', 'email', 'phone']));
+    // Actualizar datos
+    $client->fill($request->only(['name', 'email']));
     $client->save();
 
     return response()->json(['message' => 'Datos actualizados correctamente.', 'client' => $client]);
 }
 
-    public function resetPassword(Request $request)
+    public function login(Request $request)
 {
     $request->validate([
-        'token' => 'required',
-        'new_password' => 'required|min:6|confirmed',
+        'email' => 'required|email',
+        'password' => 'required',
     ]);
 
-    $reset = DB::table('password_resets')->where('token', $request->token)->first();
+    // Busca al usuario por email
+    $user = UserClient::where('email', $request->email)->first();
 
-    if (!$reset) {
-        return response()->json(['error' => 'Token inválido o expirado.'], 400);
+    if (!$user || !Hash::check($request->password, $user->password)) {
+        return response()->json(['error' => 'Credenciales incorrectas.'], 401);
     }
 
-    $client = UserClient::where('email', $reset->email)->first();
+    // Genera un token de acceso
+    $token = $user->createToken('auth_token')->plainTextToken;
 
-    if (!$client) {
-        return response()->json(['error' => 'Cliente no encontrado.'], 404);
+    return response()->json([
+        'message' => 'Inicio de sesión exitoso.',
+        'access_token' => $token,
+        'token_type' => 'Bearer',
+    ], 200);
+}
+
+    public function logout(Request $request)
+{
+    // Obtener el token del usuario autenticado
+    $token = $request->user()->currentAccessToken();
+
+    // Eliminar el token actual
+    if ($token) {
+        $token->delete();
+        return response()->json(['message' => 'Sesión cerrada correctamente.'], 200);
     }
 
-    $client->password = bcrypt($request->new_password);
-    $client->save();
+    return response()->json(['error' => 'Token inválido o no encontrado.'], 400);
+}
 
-    // Eliminar el token usado
-    DB::table('password_resets')->where('token', $request->token)->delete();
+    public function logoutAll(Request $request)
+{
+    // Obtener al usuario autenticado
+    $user = $request->user();
 
-    return response()->json(['message' => 'Contraseña restablecida correctamente.']);
+    // Revocar todos los tokens del usuario
+    $user->tokens()->delete();
+
+    return response()->json(['message' => 'Sesión cerrada en todos los dispositivos.'], 200);
 }
 
 }
