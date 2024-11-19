@@ -1,8 +1,7 @@
 <?php
 namespace App\Models\Raffles;
 
-use App\Models\Raffles\Raffle;
-use App\Models\Clients\Client;
+use App\Models\Users\UserClient;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -21,12 +20,13 @@ class Ticket extends Model
     // Relación con el sorteo
     public function raffle()
     {
-        return $this->belongsTo(Raffle::class);
+        return $this->belongsTo(Raffle::class, 'raffle_id');
     }
 
     // Relación con el cliente
     public function client()
-{
-    return $this->belongsTo(Client::class, 'client_id');
+    {
+        return $this->belongsTo(UserClient::class, 'client_id');
+    }
 }
-}
+

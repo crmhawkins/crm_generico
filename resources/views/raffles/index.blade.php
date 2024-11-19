@@ -86,8 +86,18 @@
                                     @else
                                         <button class="btn btn-secondary" disabled>Finalizado</button>
                                     @endif
-                                    @if ($raffle->winner_ticket_id)
-                                        <a href="{{ route('raffles.show_winner', $raffle->id) }}" class="btn btn-success">Ver Ganador</a>
+                                    @if ($raffle->winner_number)
+                                        @php
+                                            // Verificar si el número ganador corresponde a un ticket válido
+                                            $winnerTicket = \App\Models\Raffles\Ticket::where('raffle_id', $raffle->id)
+                                                ->where('ticket_number', $raffle->winner_number)
+                                                ->first();
+                                        @endphp
+                                        @if ($winnerTicket)
+                                            <a href="{{ route('raffles.show_winner', $raffle->id) }}" class="btn btn-success">Ver Ganador</a>
+                                        @else
+                                            <button class="btn btn-secondary" disabled>No hay ganador</button>
+                                        @endif
                                     @else
                                         <form action="{{ route('raffles.assign_winner', $raffle->id) }}" method="POST" style="display:inline;">
                                             @csrf
@@ -145,4 +155,3 @@
     }
 </script>
 @endsection
-

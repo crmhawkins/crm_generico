@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Raffles\Raffle;
 use App\Models\Raffles\Ticket;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 
 
@@ -71,42 +72,42 @@ class RaffleController extends Controller
     }
 
     public function assignWinner(Request $request, Raffle $raffle)
-    {
-        $request->validate([
-            'ticket_number' => 'required|integer',
-        ]);
-
-        $winnerTicket = Ticket::where('raffle_id', $raffle->id)
-            ->where('ticket_number', $request->ticket_number)
-            ->first();
-
-        if ($winnerTicket) {
-            $raffle->winner_ticket_id = $winnerTicket->id;
-            $raffle->save();
-
-            return redirect()->route('raffles.index')->with('success', 'Ganador asignado correctamente.');
-        } else {
-            return redirect()->route('raffles.index')->with('error', 'Número de ticket no válido o no vendido.');
-        }
-    }
-
-    public function showWinner(Raffle $raffle)
 {
-    $ticket = $raffle->winner_ticket_id ? Ticket::find($raffle->winner_ticket_id) : null;
-    
-    if (!$ticket) {
-        return redirect()->route('raffles.index')->with('error', 'No se encontró un ganador para este sorteo.');
-    }
+    $request->validate([
+        'ticket_number' => 'required|integer',
+    ]);
 
-    $client = $ticket->client; // Esto debería obtener al cliente asociado al ticket
+    // Guardar el número del ganador directamente
+    $raffle->winner_number = $request->ticket_number;
+    $raffle->save();
 
-    return view('raffles.winner', compact('raffle', 'ticket', 'client'));
+    return redirect()->route('raffles.index')->with('success', 'Numero Ganador guardado correctamente.');
 }
 
 
-    
 
-    
+public function showWinner(Raffle $raffle)
+{
+    // Verificar si hay un número ganador asignado
+    if (!$raffle->winner_number) {
+        return redirect()->route('raffles.index')->with('error', 'No se ha asignado un número de ganador para este sorteo.');
+    }
+
+    // Buscar el ticket ganador
+    $ticket = Ticket::where('raffle_id', $raffle->id)
+        ->where('ticket_number', $raffle->winner_number)
+        ->first();
+
+    if ($ticket) {
+        $client = $ticket->client; // Obtener el cliente asociado
+        return view('raffles.winner', compact('raffle', 'ticket', 'client'));
+    } else {
+        return redirect()->route('raffles.index')->with('error', 'El número ganador no corresponde a ningún ticket vendido para este sorteo.');
+    }
+}
+
+
+
     public function showTickets(Raffle $raffle)
 {
     $ticketsSold = $raffle->tickets()->count();
@@ -116,8 +117,7 @@ class RaffleController extends Controller
     return view('raffles.show_tickets', compact('raffle', 'tickets', 'ticketsSold', 'totalTickets'));
 }
 
-    
-public function updateRaffle(Request $request, Raffle $raffle)
+    public function updateRaffle(Request $request, Raffle $raffle)
 {
     $request->validate([
         'raffle_name' => 'required|string|max:255',
@@ -134,8 +134,7 @@ public function updateRaffle(Request $request, Raffle $raffle)
     return redirect()->route('raffles.index')->with('success', 'Sorteo actualizado correctamente.');
 }
 
-
-public function finalize(Raffle $raffle)
+    public function finalize(Raffle $raffle)
 {
     // Cambiar el estado de 'activo' (0) a 'finalizado' (1)
     $raffle->status = 1;  // 1 significa finalizado
@@ -144,8 +143,7 @@ public function finalize(Raffle $raffle)
     return redirect()->route('raffles.index')->with('success', 'Sorteo finalizado correctamente.');
 }
 
-
-public function showCompleted()
+    public function showCompleted()
 {
     // Obtener todos los sorteos finalizados (status = 1)
     $completedRaffles = Raffle::where('status', 1)->get();
@@ -160,47 +158,55 @@ public function assignRandomTickets(Request $request)
         'quantity' => 'required|integer|min:1',
     ]);
 
-    $raffleId = $request->input('raffle_id');
-    $clientId = $request->input('client_id');
-    $quantity = $request->input('quantity');
+    $raffle = Raffle::findOrFail($request->raffle_id);
 
-    $raffle = Raffle::findOrFail($raffleId);
-
-    // Obtener todos los números de tickets posibles para el sorteo
+    // Generar rango de tickets posibles
     $totalTickets = pow(10, $raffle->ticket_digits) - 1;
     $availableTickets = range(0, $totalTickets);
 
-    // Filtrar los tickets que ya están asignados en el sorteo actual
-    $assignedTickets = Ticket::where('raffle_id', $raffleId)->pluck('ticket_number')->toArray();
+    // Filtrar tickets asignados
+    $assignedTickets = Ticket::where('raffle_id', $raffle->id)->pluck('ticket_number')->toArray();
     $availableTickets = array_diff($availableTickets, $assignedTickets);
 
-    // Asegurar que haya suficientes tickets disponibles
-    if (count($availableTickets) < $quantity) {
-        return response()->json(['error' => 'No hay suficientes tickets disponibles para asignar.'], 400);
+    // Validar si hay suficientes tickets
+    if (count($availableTickets) < $request->quantity) {
+        return response()->json(['error' => 'No hay suficientes tickets disponibles.'], 400);
     }
 
-    // Seleccionar tickets aleatorios únicos
-    $selectedTickets = array_rand(array_flip($availableTickets), $quantity);
+    // Seleccionar tickets aleatorios de forma única
+    $selectedTickets = $request->quantity === 1
+        ? [array_rand(array_flip($availableTickets))]
+        : array_rand(array_flip($availableTickets), $request->quantity);
 
-    // Crear los tickets y asignarlos al cliente
-    $assignedTicketNumbers = [];
-    foreach ($selectedTickets as $ticketNumber) {
-        $ticket = Ticket::create([
-            'raffle_id' => $raffleId,
-            'client_id' => $clientId,
-            'ticket_number' => $ticketNumber,
-        ]);
-        $assignedTicketNumbers[] = $ticketNumber;
+    // Asegurarnos de que siempre sea un array
+    if (!is_array($selectedTickets)) {
+        $selectedTickets = [$selectedTickets];
     }
 
-    return response()->json([
-        'raffle_name' => $raffle->raffle_name,
-        'year' => $raffle->year,
-        'assigned_tickets' => $assignedTicketNumbers,
-    ], 200);
+    // Usar transacción para asegurar consistencia
+    DB::beginTransaction();
+    try {
+        $assignedTicketNumbers = [];
+        foreach ($selectedTickets as $ticketNumber) {
+            $ticket = Ticket::create([
+                'raffle_id' => $raffle->id,
+                'client_id' => $request->client_id,
+                'ticket_number' => intval($ticketNumber), // Convertir a entero
+            ]);
+            $assignedTicketNumbers[] = $ticketNumber;
+        }
+        DB::commit();
+
+        return response()->json([
+            'raffle_name' => $raffle->raffle_name,
+            'year' => $raffle->year,
+            'assigned_tickets' => $assignedTicketNumbers,
+        ], 200);
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return response()->json(['error' => 'Error al asignar tickets.', 'message' => $e->getMessage()], 500);
+    }
 }
-
-
 
 
 

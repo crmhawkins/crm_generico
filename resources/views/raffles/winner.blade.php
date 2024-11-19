@@ -30,9 +30,16 @@
         <div class="card">
             <div class="card-body">
                 <h4>Sorteo: {{ $raffle->raffle_name }}</h4>
+                @if ($ticket)
                 <p><strong>Número de Ticket Ganador:</strong> {{ $ticket->ticket_number }}</p>
                 <p><strong>Nombre del Cliente:</strong> {{ $client->name }}</p>
                 <p><strong>Email del Cliente:</strong> {{ $client->email }}</p>
+            @else
+                <div class="alert alert-danger">
+                    <strong>No se encontró un ganador válido.</strong>
+                    <p>El número asignado no corresponde a ningún ticket vendido para este sorteo.</p>
+                </div>
+            @endif
                 <a href="{{ route('raffles.index') }}" class="btn btn-secondary mt-3">Volver a Sorteos</a>
             </div>
         </div>

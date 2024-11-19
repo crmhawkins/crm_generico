@@ -54,7 +54,7 @@
                                 <td>
                                     <a href="{{ route('raffles.show_tickets', $raffle->id) }}" class="btn btn-info">Ver Tickets</a>
                                     
-                                    @if ($raffle->winner_ticket_id)
+                                    @if ($raffle->winner_number)
                                         <a href="{{ route('raffles.show_winner', $raffle->id) }}" class="btn btn-success">Ver Ganador</a>
                                     @else
                                         <button class="btn btn-secondary" disabled>No hubo ganador</button>

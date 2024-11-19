@@ -18,7 +18,7 @@ class Raffle extends Model
         'ticket_digits',
         'start_date',
         'end_date',
-        'winner_ticket_id',
+        'winner_number', // Se usa para almacenar el número del ticket ganador
     ];
 
     // Relación con los boletos
@@ -27,15 +27,12 @@ class Raffle extends Model
         return $this->hasMany(Ticket::class, 'raffle_id');
     }
 
-    // Relación con el boleto ganador
-    public function winnerTicket()
+    // Método para obtener el ticket ganador basado en el número
+    public function getWinnerTicket()
     {
-        return $this->belongsTo(Ticket::class, 'winner_ticket_id');
+        return $this->tickets()->where('ticket_number', $this->winner_number)->first();
     }
-
-    // Raffle.php
-
-
 }
+
 
 
