@@ -32,6 +32,8 @@ Route::post('/updateMensajes', action: [ApiController::class, 'updateMensajes'])
 // Rutas para la gestión de clientes
 Route::post('/clients/create', [ApiController::class, 'crearCliente']); // Crear un cliente
 Route::post('clients/login', [ApiController::class, 'login']); // Login del usuario
+Route::get('/raffles', [RaffleController::class, 'getAvailableTickets']);
+
 
 
 // Rutas para la recuperación de contraseñas

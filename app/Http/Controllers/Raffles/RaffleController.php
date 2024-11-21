@@ -150,7 +150,7 @@ public function showWinner(Raffle $raffle)
     return view('raffles.completed_raffles', compact('completedRaffles'));
 }
 
-public function assignRandomTickets(Request $request)
+    public function assignRandomTickets(Request $request)
 {
     $request->validate([
         'raffle_id' => 'required|exists:raffles,id',
@@ -207,6 +207,45 @@ public function assignRandomTickets(Request $request)
         return response()->json(['error' => 'Error al asignar tickets.', 'message' => $e->getMessage()], 500);
     }
 }
+
+
+public function getAvailableTickets()
+{
+    // Obtener todos los sorteos activos
+    $raffles = Raffle::where('status', 0) // Solo sorteos activos
+        ->get();
+
+    if ($raffles->isEmpty()) {
+        return response()->json([
+            'success' => true,
+            'data' => [],
+            'message' => 'No hay sorteos activos en este momento.'
+        ], 200);
+    }
+
+    $raffleData = $raffles->map(function ($raffle) {
+        // Calcular el rango total de boletos disponibles
+        $totalTickets = pow(10, $raffle->ticket_digits);
+
+        // Obtener los boletos ya asignados para este sorteo
+        $assignedTickets = Ticket::where('raffle_id', $raffle->id)->pluck('ticket_number')->toArray();
+
+        // Calcular los boletos disponibles
+        $availableTickets = $totalTickets - count($assignedTickets);
+
+        return [
+            'raffle_id' => $raffle->id,
+            'raffle_name' => $raffle->raffle_name,
+            'available_tickets' => $availableTickets,
+        ];
+    });
+
+    return response()->json([
+        'success' => true,
+        'data' => $raffleData,
+    ], 200);
+}
+
 
 
 
