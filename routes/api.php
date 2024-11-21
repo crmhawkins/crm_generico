@@ -48,5 +48,6 @@ Route::middleware('auth:sanctum')->group(function () { // Requiere token;
     Route::put('/clients/password_update/{id}', [ApiController::class, 'updatePassword']); // Actualizar contraseña del cliente
     Route::post('clients/logout', [ApiController::class, 'logout']); //Desconectar, y eliminar token Usuario
     Route::post('/clients/logout-all', [ApiController::class, 'logoutAll']); //Desconectar todos los dispositivos
+    Route::get('/user', [ApiController::class, 'getAuthenticatedUser']);
 
 }); 

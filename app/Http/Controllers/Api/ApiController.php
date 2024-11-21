@@ -185,4 +185,39 @@ class ApiController extends Controller
     return response()->json(['message' => 'Sesión cerrada en todos los dispositivos.'], 200);
 }
 
+
+public function getAuthenticatedUser(Request $request)
+{
+    try {
+        // El middleware `auth:sanctum` garantizará que el token sea válido
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Usuario no encontrado.'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'created_at' => $user->created_at,
+                // Incluye cualquier otro campo relevante
+            ],
+        ], 200);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error al obtener los datos del usuario.',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
+
+
+
 }
