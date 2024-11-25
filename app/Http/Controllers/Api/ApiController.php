@@ -76,6 +76,23 @@ class ApiController extends Controller
 
     }
 
+
+    public function crearCliente2(Request $request)
+    {
+        $data = $request->all();
+
+        if (!isset($data['name']) && $data['name'] == '') return response()->json('El campo NAME es obligatorio y no puede estar vacio', 400);
+        if (!isset($data['email']) && $data['email'] == '') return response()->json('El campo EMAIL es obligatorio y no puede estar vacio', 400);
+
+        $crearUsuarioCliente = UserClient::create($data);
+        
+        if ($crearUsuarioCliente) return response()->json('El cliente se ha creado correctamente.', 201);
+        
+        return response()->json('Error en el servidor, contacta con el administrador.', status: 500);
+
+    }
+
+
     public function updatePassword(Request $request, $id)
 {
     // Validación manual
